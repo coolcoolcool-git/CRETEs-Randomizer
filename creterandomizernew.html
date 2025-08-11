@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CRETEs INSTA-USE SERIES</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: 2rem auto; text-align: center; }
+    button, select { padding: 0.5em 1em; font-size: 1.05em; margin: 0.25em 0.4em 1em; }
+    h1 { margin-bottom: .3em; }
+
+    .booster-select-wrapper {
+      border: 3px solid #222;
+      border-radius: 18px;
+      padding: 1.1em 0.9em 0.9em;
+      background: #f0f2f7;
+      margin-bottom: 1.4em;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
+    .booster-select-wrapper h3 {
+      margin: 0 0 .65em;
+      letter-spacing: 1px;
+      font-size: 1.08em;
+    }
+    .booster-grid {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 0.6em;
+      justify-content: center;
+      overflow-x: auto;
+      padding: 0.25em 0.4em;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+    .booster-grid::-webkit-scrollbar { height: 8px; }
+    .booster-grid::-webkit-scrollbar-track { background: #dcdfe4; border-radius: 20px; }
+    .booster-grid::-webkit-scrollbar-thumb { background: #888; border-radius: 20px; }
+    .booster-grid::-webkit-scrollbar-thumb:hover { background: #555; }
+
+    .booster-card {
+      position: relative;
+      width: 110px;
+      flex: 0 0 110px;
+      cursor: pointer;
+      transition: transform .25s, box-shadow .25s, border .25s;
+      border: 3px solid transparent;
+      border-radius: 14px;
+      background: #ffffff;
+      padding: .35em .35em .7em;
+      box-sizing: border-box;
+    }
+    .booster-card img {
+      width: 100%;
+      height: 136px;
+      object-fit: cover;
+      border-radius: 10px;
+      display: block;
+    }
+    .booster-card .booster-name {
+      margin-top: .45em;
+      font-weight: 600;
+      font-size: .72em;
+      letter-spacing: .6px;
+      line-height: 1.05em;
+      min-height: 2.1em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .booster-card.active {
+      border-color: #1565c0;
+      box-shadow: 0 4px 20px rgba(21,101,192,0.35);
+      transform: translateY(-4px);
+    }
+    .booster-card:hover:not(.locked) {
+      transform: translateY(-6px);
+      box-shadow: 0 6px 26px rgba(0,0,0,0.22);
+    }
+    .booster-card.locked { cursor: not-allowed; opacity: 0.45; }
+    .booster-card.locked::after {
+      content: "COMING SOON";
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .62em; font-weight: bold; letter-spacing: 1px;
+      background: rgba(10,10,10,0.55); color: #fff; border-radius: 14px;
+      padding: 0 .3em; text-align: center;
+    }
+
+    .pull-row { display: flex; justify-content: center; flex-wrap: nowrap; gap: 1.4em; margin: 0.5em auto 1.5em; width: 100%; max-width: 900px; }
+    .card { display: inline-block; width: 110px; height: 154px; perspective: 800px; margin: 0 2px; transition: transform 0.2s cubic-bezier(.4,2,.6,1), box-shadow 0.2s cubic-bezier(.4,2,.6,1), width 0.18s, height 0.18s; z-index: 1; }
+    .card:hover { width: 240px; height: 336px; transform: scale(1.0) translateY(-8px); z-index: 10; box-shadow: 0 8px 32px rgba(30,30,30,0.20), 0 4px 12px rgba(0,0,0,0.13); }
+    .card-inner { width: 100%; height: 100%; transition: transform 0.7s cubic-bezier(.4,2,.6,1); transform-style: preserve-3d; position: relative; cursor: pointer; }
+    .card.flipped .card-inner { transform: rotateY(180deg); cursor: default; }
+    .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; }
+    .card-back { background: #eaeaea; transform: rotateY(0deg); }
+    .card-front { background: #fff; transform: rotateY(180deg); }
+    .rarity-img, .back-img { width: 110px; height: 154px; object-fit: cover; border: 2px solid #ccc; background: #f6f6f6; display: block; margin: 0 auto; border-radius: 0; padding: 0; box-sizing: border-box; transition: box-shadow 0.18s, border 0.18s, width 0.18s, height 0.18s; }
+    .card:hover .rarity-img, .card:hover .back-img { width: 240px; height: 336px; }
+
+    .special-zone-box {
+      border: 3px solid #222; border-radius: 18px; padding: 1.9em 1em 1.2em;
+      background: #f5f5f9; box-shadow: 0 8px 32px rgba(80,80,80,0.07), 0 4px 12px rgba(0,0,0,0.15);
+      max-width: 820px; margin: 1.7em auto;
+    }
+    .special-zone-title { margin: 0 0 0.4em; font-size: 1.05em; font-weight: 600; letter-spacing: .6px; }
+    .special-zone-sub { font-size: .7em; margin: -0.3em 0 0.9em; color:#555; }
+
+    .special-zone-table { margin: 0 auto; width: 100%; border-spacing: 0 0.55em; }
+    .special-zone-table th { font-size: 0.95em; font-weight: 700; padding: 0.5em 0.75em; background: #ececec; border-bottom: 2px solid #ddd; letter-spacing: .8px; text-align: right; width: 110px; vertical-align: top; }
+    .special-zone-table td { padding: 0.4em 0.5em; vertical-align: top; }
+
+    .special-row-flex { display: flex; flex-wrap: wrap; gap: 0.18em; justify-content: flex-start; }
+
+    .mythical-split-wrapper { display: flex; flex-direction: column; gap: 0.25em; }
+    .mythical-row { display: flex; flex-wrap: nowrap; gap: 0.18em; }
+
+    .special-cretes {
+      position: relative;
+      display: inline-block;
+      margin: 0 0.18em;
+      vertical-align: top;
+      box-sizing: border-box;
+    }
+    .special-cretes img {
+      width: 110px;
+      height: 154px;
+      object-fit: cover;
+      border: 2px solid #bbb;
+      background: #fff;
+      margin: 0;
+      box-sizing: border-box;
+      transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s, border 0.18s, width 0.18s, height 0.18s;
+    }
+    .special-cretes:hover img {
+      width: 240px;
+      height: 336px;
+      transform: scale(1.0) translateY(-8px);
+      z-index: 12;
+      box-shadow: 0 8px 32px 0 rgba(30,30,30,0.18), 0 4px 12px 0 rgba(0,0,0,0.13);
+      border: 2px solid #ffea00;
+    }
+    .special-cretes .badge {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      min-width: 32px;
+      height: 32px;
+      background: #fff;
+      color: #222;
+      border-radius: 50%;
+      font-size: 1.05em;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #888;
+      z-index: 25;
+      pointer-events: none;
+    }
+
+    .special-label.mythical { color: #D32F2F; }
+    .special-label.legendary { color: #FFEA00; text-shadow: 0 2px 6px #8a7b00, 0 0 1px #222; }
+    .special-label.ultra-legendary { color: #ffe600; text-shadow: -1px -1px 0 #191900, 1px -1px 0 #191900, -1px 1px 0 #191900, 1px 1px 0 #191900; }
+
+    .error-msg { color: #d32f2f; font-size: 0.86em; margin: 0.25em 0 0.7em; display: none; }
+    .draw-counter { font-size: 1.03em; font-weight: bold; letter-spacing: 1px; margin: .2em 0 .8em; }
+    .congrats-msg { font-size: 1.1em; margin: 1em auto 0.6em; font-weight: bold; display: none; }
+
+    .congrats-mythical { color: #D32F2F; }
+    .congrats-legendary { color: #FFEA00; text-shadow: 0 2px 8px #8a7b00, 0 0 1px #222; }
+    .congrats-ultra-legendary { color: #ffe600; text-shadow: -1px -1px 0 #191900, 1px -1px 0 #191900, -1px 1px 0 #191900, 1px 1px 0 #191900; }
+    .congrats-rare { color: #0033cc; }
+    .congrats-uncommon { color: #00897b; }
+    .congrats-common { color: #795548; }
+    .congrats-ultra-common { color: #757575; }
+
+    .secret-label { color: #d32f2f; font-weight: bold; font-size: 0.9em; margin-top: 1em; margin-bottom: 0.45em; letter-spacing: .8px; display: block; }
+    .secret-combo-msg { font-size: 0.85em; margin-bottom: 0.4em; }
+
+    .shiny {
+      position: relative;
+      overflow: hidden;
+      animation: shiny-foil 1.5s linear infinite;
+      box-shadow: 0 0 18px 4px #ffeb3b, 0 0 40px 10px #fff59d;
+    }
+    .shiny::after {
+      content:"";
+      position:absolute;
+      top:-70%; left:-100%;
+      width:280%; height:240%;
+      background:linear-gradient(120deg,rgba(255,255,255,0) 70%,rgba(255,255,255,.7) 90%,rgba(255,255,255,0) 100%);
+      transform:rotate(25deg);
+      animation: foil-glint 2s infinite linear;
+      pointer-events:none;
+    }
+    @keyframes foil-glint { 0%{left:-100%;} 90%{left:-100%;} 100%{left:100%;} }
+    @keyframes shiny-foil { 0%{filter:brightness(1.1)} 50%{filter:brightness(1.3)} 100%{filter:brightness(1.1)} }
+
+    @media (max-width:700px) {
+      .pull-row { flex-wrap: wrap; gap: 0.7em; justify-content: center; max-width: 380px; }
+      .card, .rarity-img, .back-img { width: 64px; height: 90px; }
+      .card:hover { width: 240px; height: 336px; }
+      .card:hover .rarity-img, .card:hover .back-img { width: 240px; height: 336px; }
+      .special-cretes img { width: 64px; height: 90px; }
+      .special-cretes:hover img { width: 240px; height: 336px; }
+      .special-cretes .badge { min-width: 24px; height: 24px; font-size: .9em; top: 2px; right: 2px; }
+      .booster-card { width: 96px; flex: 0 0 96px; }
+      .booster-card img { height: 120px; }
+      .mythical-row { gap: 0.1em; }
+    }
+    @media (max-width:500px) {
+      .pull-row { max-width: 320px; gap: 0.4em; }
+      .card, .rarity-img, .back-img { width: 48px; height: 67px; }
+      .card:hover { width: 240px; height: 336px; }
+      .card:hover .rarity-img, .card:hover .back-img { width: 240px; height: 336px; }
+      .special-cretes img { width: 48px; height: 67px; }
+      .special-cretes:hover img { width: 240px; height: 336px; }
+      .special-cretes .badge { min-width: 18px; height: 18px; font-size: .82em; top: 2px; right: 2px; }
+      .booster-card { width: 88px; flex: 0 0 88px; }
+      .booster-card img { height: 110px; }
+      .mythical-row { gap: 0.08em; }
+    }
+  </style>
+</head>
+<body>
+  <h1>CRETEs RANDOMIZER</h1>
+  <h2 style="margin-top:0.5em; font-weight:normal; font-size:1.15em; color:#444;">Choose your Booster Pack</h2>
+
+  <div class="booster-select-wrapper">
+    <h3>Booster Packs</h3>
+    <div class="booster-grid" id="boosterGrid"></div>
+  </div>
+
+  <div class="draw-counter" id="drawCounter">CRETEs Pulled: 0</div>
+
+  <label for="numPulls" class="name-input-label">Cards per Pack:</label>
+  <select id="numPulls">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="5" selected>5</option>
+  </select>
+
+  <div class="error-msg" id="errorMsg"></div>
+  <button id="pullBtn" disabled>DRAW</button>
+  <button id="revealAllBtn" class="reveal-all-btn" style="display:none;">Reveal All</button>
+  <button id="resetBtn" class="reset-btn" style="display:none;">Reset</button>
+
+  <div id="results-zone"></div>
+  <div id="congratsMsg" class="congrats-msg"></div>
+  <div id="secretCombosMsg"></div>
+  <div id="specialZoneContainer"></div>
+
+  <script>
+    function png(name){ return name.endsWith('.png') ? name : name + '.png'; }
+
+    /* Original global pools (kept for other boosters & fallback) */
+    const globalRarityImages = {
+      "ultra common": ["B1.png"],
+      common: ["C1.png","C2.png","C3.png","C4.png","C5.png","C6.png"],
+      uncommon: ["U1.png","U2.png","U3.png","U4.png","U5.png","U6.png","U7.png"],
+      rare: ["R1.png","R2.png","R3.png","R4.png","R5.png","R6.png","R7.png","R8.png","R9.png","R10.png","R11.png"],
+      mythical: ["M1.png","M2.png","M3.png","M4.png","M5.png","M6.png"],
+      legendary: ["L1.png","L2.png","L3.png"],
+      "ultra legendary": ["UL1.png","UL2.png","UL3.png"]
+    };
+
+    /* Starter Pack new images */
+    const starterPackImages = {
+      "ultra common": ["SPB1"],
+      common: ["SPC1","SPC2","SPC3"],
+      uncommon: ["SPU1","SPU2"],
+      rare: ["SPR1","SPR2"],
+      mythical: ["SPM1"]
+      /* legendary & ultra legendary fallback */
+    };
+
+    /* Random Pack custom pool:
+       Remove old (ultra common -> mythical) and include only the new starter pack low tiers,
+       but keep original legendary & ultra legendary. */
+    const randomPackImages = {
+      "ultra common": ["SPB1"],
+      common: ["SPC1","SPC2","SPC3"],
+      uncommon: ["SPU1","SPU2"],
+      rare: ["SPR1","SPR2"],
+      mythical: ["SPM1"],
+      legendary: ["L1","L2","L3"],
+      "ultra legendary": ["UL1","UL2","UL3"]
+    };
+
+    const baseRatesTemplate = {
+      "ultra common": 50,
+      common: 35,
+      uncommon: 10,
+      rare: 4,
+      mythical: 0.7,
+      legendary: 0.25,
+      "ultra legendary": 0.05
+    };
+    const cloneRates = src => JSON.parse(JSON.stringify(src));
+
+    const boosterConfigs = {
+      booster0: { id:'booster0', name:'Starter Pack', enabled:true,  images: starterPackImages, baseRates:null },
+      booster1: { id:'booster1', name:'Booster 1',     enabled:false, images:null, baseRates:null },
+      booster2: { id:'booster2', name:'Booster 2',     enabled:false, images:null, baseRates:null },
+      booster3: { id:'booster3', name:'Booster 3',     enabled:false, images:null, baseRates:null },
+      booster4: { id:'booster4', name:'Booster 4',     enabled:false, images:null, baseRates:null },
+      booster5: { id:'booster5', name:'Booster 5',     enabled:false, images:null, baseRates:null },
+      /* Changed booster6: now explicit images (no aggregation) per request */
+      booster6: { id:'booster6', name:'RANDOM PACK',   enabled:true,  images: randomPackImages, baseRates:null }
+    };
+
+    const boosterRates = {
+      booster0: cloneRates(baseRatesTemplate),
+      booster1: cloneRates(baseRatesTemplate),
+      booster2: cloneRates(baseRatesTemplate),
+      booster3: cloneRates(baseRatesTemplate),
+      booster4: cloneRates(baseRatesTemplate),
+      booster5: cloneRates(baseRatesTemplate),
+      booster6: cloneRates(baseRatesTemplate)
+    };
+
+    let cretesPulled = 0;
+    let specialCounts = { mythical:{}, legendary:{}, "ultra legendary":{} };
+    let lastPulls = [];
+    let flipped = [];
+    let lastCongrats = null;
+    let activeBooster = null;
+    const boosterImagesMap = {};
+
+    const numPullsSelect = document.getElementById('numPulls');
+    const pullBtn = document.getElementById('pullBtn');
+    const revealAllBtn = document.getElementById('revealAllBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    const drawCounterElem = document.getElementById('drawCounter');
+    const resultsZone = document.getElementById('results-zone');
+    const congratsMsg = document.getElementById('congratsMsg');
+    const secretCombosMsg = document.getElementById('secretCombosMsg');
+    const specialZoneContainer = document.getElementById('specialZoneContainer');
+    const boosterGrid = document.getElementById('boosterGrid');
+
+    function getEffectivePoolForBooster(cfg){
+      if (cfg.images && cfg.images !== 'AGGREGATE') {
+        // Full explicit pool (we ensure fallback for missing rarities)
+        const pool = {};
+        Object.keys(globalRarityImages).forEach(r=>{
+          if (cfg.images[r]) pool[r] = cfg.images[r];
+          else pool[r] = globalRarityImages[r].map(n=>n.replace('.png',''));
+        });
+        return pool;
+      }
+      // Fallback (not used now for booster6)
+      const pool = {};
+      Object.keys(globalRarityImages).forEach(r=>{
+        pool[r] = globalRarityImages[r].map(n=>n.replace('.png',''));
+      });
+      return pool;
+    }
+
+    function getHighRarityPoolForActiveBooster(){
+      if(!activeBooster) return null;
+      const cfg = boosterConfigs[activeBooster];
+      const pool = getEffectivePoolForBooster(cfg);
+      return {
+        mythical: pool.mythical ? [...pool.mythical] : [],
+        legendary: pool.legendary ? [...pool.legendary] : [],
+        "ultra legendary": pool["ultra legendary"] ? [...pool["ultra legendary"]] : []
+      };
+    }
+
+    function saveState(){
+      localStorage.setItem("cretes_draw_counter", cretesPulled);
+      localStorage.setItem("cretes_special_counts", JSON.stringify(specialCounts));
+    }
+    function loadState(){
+      const c = parseInt(localStorage.getItem("cretes_draw_counter"));
+      cretesPulled = isNaN(c)?0:c;
+      const s = localStorage.getItem("cretes_special_counts");
+      specialCounts = s? JSON.parse(s): { mythical:{}, legendary:{}, "ultra legendary":{} };
+    }
+
+    function renderBoosterGrid(){
+      boosterGrid.innerHTML="";
+      Object.values(boosterConfigs).forEach(cfg=>{
+        const div=document.createElement('div');
+        div.className='booster-card'+(cfg.enabled?'':' locked');
+        div.dataset.booster=cfg.id;
+        div.innerHTML=`
+          <img src="${cfg.id}.png" alt="${cfg.name}">
+          <div class="booster-name">${cfg.name}</div>`;
+        if(cfg.enabled){
+          div.addEventListener('click',()=>{
+            setActiveBooster(cfg.id);
+            openPack();
+          });
+        }
+        boosterGrid.appendChild(div);
+        boosterImagesMap[cfg.id]=div;
+      });
+    }
+
+    function setActiveBooster(id){
+      if(!boosterConfigs[id]||!boosterConfigs[id].enabled) return;
+      activeBooster=id;
+      Object.values(boosterImagesMap).forEach(d=>d.classList.remove('active'));
+      boosterImagesMap[id].classList.add('active');
+      pullBtn.disabled=false;
+      revealAllBtn.style.display="inline-block";
+      resetBtn.style.display="inline-block";
+      hideError();
+      renderSpecialZone();
+    }
+
+    function openPack(){
+      if(!activeBooster){ showError("Select a booster first."); return; }
+      performPull();
+    }
+
+    function performPull(){
+      const numPulls=parseInt(numPullsSelect.value,10);
+      hideError();
+      resultsZone.innerHTML="";
+      secretCombosMsg.innerHTML="";
+      congratsMsg.style.display="none";
+      lastCongrats=null;
+      lastPulls=[];
+      flipped=[];
+
+      const rates = boosterRates[activeBooster] || baseRatesTemplate;
+      const cfg = boosterConfigs[activeBooster];
+      const poolImages = getEffectivePoolForBooster(cfg);
+
+      let ultraCommonCount=0;
+
+      for(let i=0;i<numPulls;i++){
+        let basePool=["ultra common","common","uncommon","rare"];
+        if(cretesPulled>=500) basePool.push("mythical");
+        if(cretesPulled>=1500) basePool.push("legendary");
+        if(cretesPulled>=2500) basePool.push("ultra legendary");
+        if(i>=2 && ultraCommonCount>=2) basePool=basePool.filter(r=>r!=="ultra common");
+        const rarity=pickRarityFrom(basePool,i,ultraCommonCount,rates);
+        const img=pickImage(rarity,poolImages);
+        if(rarity==="ultra common") ultraCommonCount++;
+        lastPulls.push({rarity,img});
+        flipped.push(false);
+      }
+
+      const rowDiv=document.createElement('div');
+      rowDiv.className='pull-row';
+      lastPulls.forEach((p,idx)=>{
+        const card=document.createElement('div');
+        card.className='card';
+        card.innerHTML=`
+          <div class="card-inner">
+            <div class="card-face card-back">
+              <img src="back.png" alt="Back" class="back-img">
+            </div>
+            <div class="card-face card-front">
+              <img src="${png(p.img)}" alt="" class="rarity-img">
+            </div>
+          </div>`;
+        card.addEventListener('click',()=>{ if(!flipped[idx]) flipCard(idx,card); });
+        rowDiv.appendChild(card);
+      });
+      resultsZone.appendChild(rowDiv);
+
+      cretesPulled += numPulls;
+      updateDrawCounter();
+      saveState();
+    }
+
+    function pickRarityFrom(list,slotIdx,ultraCommonCount,rates){
+      let local=[];
+      for(const r of list){
+        if(r==="mythical" && slotIdx!==3 && cretesPulled>=500) continue;
+        if(r==="legendary" && slotIdx!==4 && cretesPulled>=1500) continue;
+        if(r==="ultra legendary" && slotIdx!==4 && cretesPulled>=2500) continue;
+        if((r==="mythical" && cretesPulled<500) ||
+           (r==="legendary" && cretesPulled<1500) ||
+           (r==="ultra legendary" && cretesPulled<2500)) continue;
+        local.push({name:r, rate: rates[r]});
+      }
+      if(local.length===0){
+        for(const r of list){
+          if(["mythical","legendary","ultra legendary"].includes(r)) continue;
+          local.push({name:r, rate: rates[r]});
+        }
+      }
+      const total=local.reduce((s,o)=>s+o.rate,0);
+      const rand=Math.random()*total;
+      let cum=0;
+      for(const o of local){
+        cum+=o.rate;
+        if(rand<cum) return o.name;
+      }
+      return local[local.length-1].name;
+    }
+
+    function pickImage(rarity,pool){
+      const arr = pool[rarity];
+      if(!arr || !arr.length) return "";
+      return arr[Math.floor(Math.random()*arr.length)];
+    }
+
+    function renderSpecialZone(){
+      const container=document.createElement('div');
+      container.className='special-zone-box';
+      const title=document.createElement('h3');
+      title.className='special-zone-title';
+      title.textContent='High Rarity Collection';
+      container.appendChild(title);
+      const sub=document.createElement('div');
+      sub.className='special-zone-sub';
+      sub.innerHTML = activeBooster
+        ? `Viewing: <b>${boosterConfigs[activeBooster].name}</b>${activeBooster==='booster6'?' (Custom Pool)':''}`
+        : 'Select a booster.';
+      container.appendChild(sub);
+
+      const pool = getHighRarityPoolForActiveBooster();
+      if(!pool){
+        specialZoneContainer.innerHTML="";
+        specialZoneContainer.appendChild(container);
+        return;
+      }
+
+      const table=document.createElement('table');
+      table.className='special-zone-table';
+
+      if(pool.mythical && pool.mythical.length){
+        const mythTR=document.createElement('tr');
+        const mythTH=document.createElement('th');
+        mythTH.className='special-label mythical';
+        mythTH.textContent='Mythical';
+        mythTR.appendChild(mythTH);
+        const mythTD=document.createElement('td');
+        const wrapper=document.createElement('div');
+        wrapper.className='mythical-split-wrapper';
+
+        const topRow=document.createElement('div');
+        topRow.className='mythical-row';
+        pool.mythical.slice(0,3).forEach(img=>{
+          topRow.appendChild(makeSpecialThumb('mythical', img));
+        });
+        wrapper.appendChild(topRow);
+
+        const bottomRow=document.createElement('div');
+        bottomRow.className='mythical-row';
+        pool.mythical.slice(3,6).forEach(img=>{
+          bottomRow.appendChild(makeSpecialThumb('mythical', img));
+        });
+        if(pool.mythical.length>3) wrapper.appendChild(bottomRow);
+        mythTD.appendChild(wrapper);
+        mythTR.appendChild(mythTD);
+        table.appendChild(mythTR);
+      }
+
+      [
+        {key:'legendary', label:'Legendary', cls:'legendary'},
+        {key:'ultra legendary', label:'Ultra Legendary', cls:'ultra-legendary'}
+      ].forEach(sec=>{
+        const imgs = pool[sec.key] || [];
+        if(!imgs.length) return;
+        const tr=document.createElement('tr');
+        const th=document.createElement('th');
+        th.className='special-label '+sec.cls;
+        th.textContent=sec.label;
+        tr.appendChild(th);
+        const td=document.createElement('td');
+        const rowDiv=document.createElement('div');
+        rowDiv.className='special-row-flex';
+        imgs.forEach(img=>{
+          rowDiv.appendChild(makeSpecialThumb(sec.key, img));
+        });
+        td.appendChild(rowDiv);
+        tr.appendChild(td);
+        table.appendChild(tr);
+      });
+
+      container.appendChild(table);
+      specialZoneContainer.innerHTML="";
+      specialZoneContainer.appendChild(container);
+    }
+
+    function makeSpecialThumb(rarity,img){
+      const key = png(img);
+      const count = specialCounts[rarity][key] || 0;
+      const span=document.createElement('span');
+      span.className='special-cretes';
+      span.innerHTML=`<img src="${key}" alt="${rarity}">${count>0?`<span class="badge">${count}</span>`:''}`;
+      return span;
+    }
+
+    function isSpecial(r){ return r==="mythical"||r==="legendary"||r==="ultra legendary"; }
+
+    function flipCard(idx, card){
+      const allImgs=card.parentNode.querySelectorAll('.card .rarity-img');
+      allImgs.forEach(i=>i.classList.remove('shiny'));
+      card.classList.add('flipped');
+      flipped[idx]=true;
+      const {rarity,img}=lastPulls[idx];
+      if(isSpecial(rarity)){
+        const key = png(img);
+        if(!specialCounts[rarity][key]) specialCounts[rarity][key]=1;
+        else specialCounts[rarity][key]++;
+        saveState();
+        renderSpecialZone();
+        showCongrats(rarity);
+        setTimeout(()=>{
+          const imgEl=card.querySelector('.rarity-img');
+          if(imgEl) imgEl.classList.add('shiny');
+        },300);
+      }
+      updateSecretCombinationDisplay();
+    }
+
+    function checkSecretCombinations(pulledImages,pulls){
+      const combos=[];
+      const baseNoExt = pulledImages.map(x=>x.replace('.png',''));
+      const hasAll=(arr,t)=>t.every(x=>arr.includes(x));
+      const count=(arr,t)=>arr.filter(x=>x===t).length;
+      if(hasAll(baseNoExt,["C1","C2","C3"])) combos.push("PLUS ULTRA - All Baby Plus = <b>+10 group points</b>");
+      if(hasAll(baseNoExt,["C4","C5","C6"])) combos.push("MINUS ULTRA - All Baby Minus = <b>-10 to another group</b>");
+      if(count(pulledImages,"R3.png")>=2 || count(baseNoExt,"R3")>=2) combos.push('FATE DECIDER - 2x R3 = <b>FATE DECIDER</b>');
+      if(count(pulledImages,"U7.png")>=3 || count(baseNoExt,"U7")>=3) combos.push('TRIPLE MINUS KILL - 3x U7 = <b>-15 to all groups</b>');
+      if(hasAll(baseNoExt,["R1","R2"])) combos.push('EGYPTIAN GOD - R1 + R2 = <b>+5 CATCHERS</b>');
+      if(hasAll(baseNoExt,["U1","U3","U5"])) combos.push('ALPHA MALE - Male Uncommons = <b>+ (#male present)</b>');
+      if(hasAll(baseNoExt,["U2","U4","U6"])) combos.push('ALPHA FEMALE - Female Uncommons = <b>+ (#female present)</b>');
+      if(hasAll(baseNoExt,["R6","R7"])) combos.push('PSEUDO 1 - R6 + R7 = <b>+10 CATCHERS</b>');
+      if(hasAll(baseNoExt,["R6","R7","R9","R10","R11"])) combos.push('PSEUDO STACK - All Pseudo Mythical = <b>+25 CATCHERS</b>');
+      if(pulls.filter(p=>p.rarity==="ultra common").length===0) combos.push('LUCKY ONE - 0 Ultra Common = <b>+5 CATCHER</b>');
+      return combos;
+    }
+
+    function updateSecretCombinationDisplay(){
+      if(flipped.length===5 && flipped.every(f=>f)){
+        const imgs=lastPulls.map(p=>png(p.img));
+        const combos=checkSecretCombinations(imgs,lastPulls);
+        secretCombosMsg.innerHTML = combos.length
+          ? `<span class="secret-label">SECRET COMBINATION:</span>${combos.map(c=>`<div class="secret-combo-msg">${c}</div>`).join("")}`
+          : "";
+      } else {
+        secretCombosMsg.innerHTML="";
+      }
+    }
+
+    const rarityColorClass = {
+      mythical:"congrats-mythical",
+      legendary:"congrats-legendary",
+      "ultra legendary":"congrats-ultra-legendary",
+      rare:"congrats-rare",
+      uncommon:"congrats-uncommon",
+      common:"congrats-common",
+      "ultra common":"congrats-ultra-common"
+    };
+
+    function showCongrats(rarity){
+      const cls=rarityColorClass[rarity]||"";
+      const nice=rarity.split(' ').map(w=>w[0].toUpperCase()+w.slice(1)).join(' ');
+      lastCongrats={msg:`CONGRATULATIONS on pulling a <span class="${cls}">${nice}</span>!`, className:cls};
+      congratsMsg.innerHTML=lastCongrats.msg;
+      congratsMsg.className="congrats-msg "+cls;
+      congratsMsg.style.display="block";
+    }
+    function updateDrawCounter(){ drawCounterElem.textContent=`CRETEs Pulled: ${cretesPulled}`; }
+    function showError(m){ errorMsg.textContent=m; errorMsg.style.display="block"; }
+    function hideError(){ errorMsg.textContent=""; errorMsg.style.display="none"; }
+    function resetDraws(){
+      cretesPulled=0;
+      specialCounts={ mythical:{}, legendary:{}, "ultra legendary":{} };
+      resultsZone.innerHTML="";
+      secretCombosMsg.innerHTML="";
+      congratsMsg.style.display="none";
+      lastCongrats=null;
+      updateDrawCounter();
+      renderSpecialZone();
+      saveState();
+    }
+
+    pullBtn.addEventListener('click', openPack);
+    revealAllBtn.addEventListener('click', ()=>{
+      const cards=document.querySelectorAll('.pull-row .card');
+      for(let i=0;i<flipped.length;i++){
+        if(!flipped[i]) flipCard(i,cards[i]);
+      }
+      updateSecretCombinationDisplay();
+    });
+    resetBtn.addEventListener('click', resetDraws);
+
+    window.onload=function(){
+      loadState();
+      renderBoosterGrid();
+      setActiveBooster('booster0');
+      renderSpecialZone();
+      updateDrawCounter();
+    };
+  </script>
+</body>
+</html>
