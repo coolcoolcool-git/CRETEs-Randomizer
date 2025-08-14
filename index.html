@@ -292,13 +292,13 @@
     };
 
     const baseRatesTemplate = {
-      "ultra common": 50,
+      "ultra common": 45,
       common: 35,
       uncommon: 10,
-      rare: 4,
-      mythical: 0.7,
-      legendary: 0.25,
-      "ultra legendary": 0.05
+      rare: 6,
+      mythical: 2,
+      legendary: 1.5,
+      "ultra legendary": 0.5
     };
     const cloneRates = src => JSON.parse(JSON.stringify(src));
 
@@ -476,9 +476,9 @@
     function pickRarityFrom(list,slotIdx,ultraCommonCount,rates){
       let local=[];
       for(const r of list){
-        if(r==="mythical" && slotIdx!==3 && cretesPulled>=500) continue;
-        if(r==="legendary" && slotIdx!==4 && cretesPulled>=1500) continue;
-        if(r==="ultra legendary" && slotIdx!==4 && cretesPulled>=2500) continue;
+        if(r==="mythical" && slotIdx!==3 && cretesPulled>=400) continue;
+        if(r==="legendary" && slotIdx!==4 && cretesPulled>=1000) continue;
+        if(r==="ultra legendary" && slotIdx!==4 && cretesPulled>=2000) continue;
         if((r==="mythical" && cretesPulled<500) ||
            (r==="legendary" && cretesPulled<1500) ||
            (r==="ultra legendary" && cretesPulled<2500)) continue;
@@ -700,4 +700,5 @@
   </script>
 </body>
 </html>
+
 
